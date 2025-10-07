@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Database Debug{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Database Debug</h1>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2>Faculties, Groups and Subjects</h2>
+                </div>
+                <div class="card-body">
+                    {% if faculties %}
+                        {% for faculty in faculties %}
+                            <div class="faculty mb-4">
+                                <h3>Faculty: {{ faculty.name }} (ID: {{ faculty.id }})</h3>
+                                {% if faculty.groups %}
+                                    <div class="groups ms-4">
+                                        {% for group in faculty.groups %}
+                                            <div class="group mb-3">
+                                                <h4>Group: {{ group.name }} (ID: {{ group.id }})</h4>
+                                                {% if group.subjects %}
+                                                    <div class="subjects ms-4">
+                                                        <h5>Subjects:</h5>
+                                                        <ul>
+                                                        {% for subject in group.subjects %}
+                                                            <li>
+                                                                {{ subject.name }} (ID: {{ subject.id }})
+                                                                - <a href="/{{ faculty.name }}/{{ group.name }}/{{ subject.name }}" target="_blank">View Journal</a>
+                                                                - <a href="/{{ faculty.name|urlencode }}/{{ group.name|urlencode }}/{{ subject.name|urlencode }}" target="_blank">View Journal (URL Encoded)</a>
+                                                            </li>
+                                                        {% endfor %}
+                                                        </ul>
+                                                    </div>
+                                                {% else %}
+                                                    <p>No subjects assigned to this group.</p>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p>No groups in this faculty.</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No faculties found in the database.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

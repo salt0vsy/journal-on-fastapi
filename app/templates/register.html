@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Реєстрація - Електронний журнал{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="text-center mb-4">Реєстрація</h2>
+                
+                <form id="registerForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Логін</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">Повне ім'я</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Пароль</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Підтвердження пароля</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Роль</label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="" selected disabled>Оберіть роль</option>
+                            <option value="student">Студент</option>
+                            <option value="teacher">Викладач</option>
+                        </select>
+                    </div>
+                    
+                    <div id="studentFields" class="d-none">
+                        <div class="mb-3">
+                            <label for="faculty" class="form-label">Факультет</label>
+                            <select class="form-select" id="faculty" name="faculty">
+                                <option value="" selected disabled>Оберіть факультет</option>
+                                <!-- Options will be loaded dynamically -->
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="group" class="form-label">Група</label>
+                            <select class="form-select" id="group" name="group" disabled>
+                                <option value="" selected disabled>Спочатку оберіть факультет</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Зареєструватися</button>
+                    </div>
+                </form>
+                
+                <div id="registerSuccess" class="alert alert-success mt-3 d-none">
+                    Реєстрація успішна! Очікуйте на підтвердження адміністратора.
+                    <div class="text-center mt-2">
+                        <a href="/" class="btn btn-sm btn-primary">На головну</a>
+                    </div>
+                </div>
+                
+                <div id="registerError" class="alert alert-danger mt-3 d-none"></div>
+                
+                <div class="text-center mt-3">
+                    <p>Вже маєте обліковий запис? <a href="/">Увійдіть</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const registerForm = document.getElementById('registerForm');
+        const registerError = document.getElementById('registerError');
+        const registerSuccess = document.getElementById('registerSuccess');
+        const roleSelect = document.getElementById('role');
+        const studentFields = document.getElementById('studentFields');
+        const facultySelect = document.getElementById('faculty');
+        const groupSelect = document.getElementById('group');
+        
+        // Show/hide student-specific fields based on role selection
+        roleSelect.addEventListener('change', function() {
+            if (this.value === 'student') {
+                studentFields.classList.remove('d-none');
+                loadFaculties();
+            } else {
+                studentFields.classList.add('d-none');
+            }
+        });
+        
+        // Load faculties from API
+        async function loadFaculties() {
+            try {
+                const response = await axios.get('/api/journal/public/faculties');
+                
+                if (response.data && response.data.length > 0) {
+                    facultySelect.innerHTML = '<option value="" selected disabled>Оберіть факультет</option>';
+                    
+                    response.data.forEach(faculty => {
+                        const option = document.createElement('option');
+                        option.value = faculty.id;
+                        option.textContent = faculty.name;
+                        facultySelect.appendChild(option);
+                    });
+                } else {
+                    facultySelect.innerHTML = '<option value="" selected disabled>Факультети не знайдено</option>';
+                }
+            } catch (error) {
+                console.error('Error loading faculties:', error);
+                facultySelect.innerHTML = '<option value="" selected disabled>Помилка завантаження факультетів</option>';
+            }
+        }
+        
+        // Load groups based on selected faculty
+        facultySelect.addEventListener('change', async function() {
+            const facultyId = this.value;
+            
+            if (!facultyId) {
+                groupSelect.disabled = true;
+                groupSelect.innerHTML = '<option value="" selected disabled>Спочатку оберіть факультет</option>';
+                return;
+            }
+            
+            try {
+                const response = await axios.get('/api/journal/public/groups', {
+                    params: { faculty_id: facultyId }
+                });
+                
+                groupSelect.disabled = false;
+                
+                if (response.data && response.data.length > 0) {
+                    groupSelect.innerHTML = '<option value="" selected disabled>Оберіть групу</option>';
+                    
+                    response.data.forEach(group => {
+                        const option = document.createElement('option');
+                        option.value = group.id;
+                        option.textContent = group.name;
+                        groupSelect.appendChild(option);
+                    });
+                } else {
+                    groupSelect.innerHTML = '<option value="" selected disabled>Групи не знайдено</option>';
+                }
+            } catch (error) {
+                console.error('Error loading groups:', error);
+                groupSelect.innerHTML = '<option value="" selected disabled>Помилка завантаження груп</option>';
+            }
+        });
+        
+        // Handle form submission
+        registerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Reset error and success messages
+            registerError.classList.add('d-none');
+            registerSuccess.classList.add('d-none');
+            
+            // Validate password confirmation
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (password !== confirmPassword) {
+                registerError.textContent = 'Паролі не співпадають';
+                registerError.classList.remove('d-none');
+                return;
+            }
+            
+            // Validate required fields for student role
+            const role = roleSelect.value;
+            
+            if (role === 'student') {
+                const groupId = groupSelect.value;
+                
+                if (!groupId) {
+                    registerError.textContent = 'Будь ласка, оберіть факультет та групу';
+                    registerError.classList.remove('d-none');
+                    return;
+                }
+            }
+            
+            // Prepare data for registration
+            const userData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                full_name: document.getElementById('full_name').value,
+                password: password,
+                role: role
+            };
+            
+            // Add group_id for students
+            if (role === 'student') {
+                userData.group_id = groupSelect.value;
+            }
+            
+            try {
+                const response = await axios.post('/register', userData);
+                
+                if (response.status === 201) {
+                    // Show success message
+                    registerForm.reset();
+                    registerSuccess.classList.remove('d-none');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                
+                if (error.response && error.response.data && error.response.data.detail) {
+                    registerError.textContent = error.response.data.detail;
+                } else {
+                    registerError.textContent = 'Помилка реєстрації. Спробуйте пізніше.';
+                }
+                
+                registerError.classList.remove('d-none');
+            }
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+
+{% block title %}Головна - Електронний журнал{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title text-center mb-4">Електронний журнал обліку відвідуваності та успішності студентів</h1>
+                
+                <div id="loginSection" class="{% if user %}d-none{% endif %}">
+                    <h3 class="text-center mb-4">Авторизація</h3>
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Логін</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Пароль</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Увійти</button>
+                        </div>
+                        <div class="text-center mt-3">
+                            <p>Не маєте облікового запису? <a href="/register">Зареєструйтеся</a></p>
+                        </div>
+                    </form>
+                    <div id="loginError" class="alert alert-danger mt-3 d-none"></div>
+                </div>
+                
+                <div id="journalSection" class="{% if not user %}d-none{% endif %}">
+                    <h3 class="text-center mb-4">Доступні журнали</h3>
+                    
+                    {% if user and not user.is_verified %}
+                        <div class="alert alert-warning">
+                            Ваш обліковий запис ще не підтверджено адміністратором. Очікуйте на підтвердження для отримання доступу до журналів.
+                        </div>
+                    {% elif user and user.is_verified %}
+                        <div id="journalList" class="row">
+                            {% if user.role == 'student' %}
+                                <p>Завантаження списку предметів...</p>
+                            {% elif user.role == 'teacher' %}
+                                <p>Завантаження ваших журналів...</p>
+                            {% elif user.role == 'admin' %}
+                                <p>Завантаження всіх журналів...</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Login form handling
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        const loginSection = document.getElementById('loginSection');
+        const journalSection = document.getElementById('journalSection');
+        
+        if (loginForm) {
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                try {
+                    const response = await axios.post('/login', {
+                        username,
+                        password
+                    });
+                    
+                    if (response.data && response.data.access_token) {
+                        // Store token in localStorage
+                        localStorage.setItem('token', response.data.access_token);
+                        
+                        // Ensure we store the complete user data including group_id
+                        const userData = {
+                            id: response.data.user.id,
+                            username: response.data.user.username,
+                            full_name: response.data.user.full_name,
+                            email: response.data.user.email,
+                            role: response.data.user.role,
+                            is_verified: response.data.user.is_verified,
+                            group_id: response.data.user.group_id,
+                            is_active: response.data.user.is_active
+                        };
+                        localStorage.setItem('user', JSON.stringify(userData));
+                        
+                        // Ensure cookie is set
+                        document.cookie = `access_token=Bearer ${response.data.access_token}; path=/; max-age=1800`;
+                        
+                        // Show journal section, hide login section
+                        loginSection.classList.add('d-none');
+                        journalSection.classList.remove('d-none');
+                        
+                        // Reload the page to update navigation
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    loginError.textContent = 'Помилка авторизації. Перевірте логін та пароль.';
+                    loginError.classList.remove('d-none');
+                }
+            });
+        }
+        
+        // Load journals if user is logged in
+        const loadJournals = async () => {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const journalList = document.getElementById('journalList');
+            
+            if (!user.id || !journalList) return;
+            
+            try {
+                let response;
+                console.log('Loading journals for user role:', user.role);
+                console.log('User data from localStorage:', user);
+                console.log('Raw user data from localStorage:', localStorage.getItem('user'));
+                
+                if (user.role === 'student') {
+                    if (!user.group_id) {
+                        console.error('User data missing group_id:', user);
+                        throw new Error('Student is not assigned to any group');
+                    }
+                    
+                    // Get student's subjects first
+                    const studentSubjectsResponse = await fetch(`/api/journal/student-subjects?student_id=${user.id}`);
+                    if (!studentSubjectsResponse.ok) {
+                        throw new Error(`Failed to fetch student subjects: ${studentSubjectsResponse.statusText}`);
+                    }
+                    const studentSubjects = await studentSubjectsResponse.json();
+                    console.log('Student subjects:', studentSubjects);
+                    
+                    if (!studentSubjects || studentSubjects.length === 0) {
+                        journalList.innerHTML = '<div class="alert alert-info">No subjects assigned yet.</div>';
+                        return;
+                    }
+                    
+                    // Get the group details
+                    const groupResponse = await fetch(`/api/journal/groups/${user.group_id}`);
+                    if (!groupResponse.ok) {
+                        throw new Error(`Failed to fetch group details: ${groupResponse.statusText}`);
+                    }
+                    const group = await groupResponse.json();
+                    console.log('Group details:', group);
+                    
+                    // Get faculty information
+                    const facultyResponse = await fetch(`/api/journal/faculties/${group.faculty_id}`);
+                    if (!facultyResponse.ok) {
+                        throw new Error(`Failed to fetch faculty details: ${facultyResponse.statusText}`);
+                    }
+                    const faculty = await facultyResponse.json();
+                    console.log('Faculty details:', faculty);
+                    
+                    // Create cards for each subject
+                    journalList.innerHTML = '';
+                    for (const studentSubject of studentSubjects) {
+                        // Get subject details
+                        const subjectResponse = await fetch(`/api/journal/subjects/${studentSubject.subject_id}`);
+                        if (!subjectResponse.ok) {
+                            console.error(`Failed to fetch subject ${studentSubject.subject_id}:`, subjectResponse.statusText);
+                            continue;
+                        }
+                        const subject = await subjectResponse.json();
+                        console.log('Subject details:', subject);
+                        
+                        const card = document.createElement('div');
+                        card.className = 'col-md-4 mb-4';
+                        card.innerHTML = `
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">${subject.name}</h5>
+                                    <p class="card-text">
+                                        <strong>Faculty:</strong> ${faculty.name}<br>
+                                        <strong>Group:</strong> ${group.name}
+                                    </p>
+                                    <a href="/journal/${encodeURIComponent(faculty.name)}/${encodeURIComponent(group.name)}/${encodeURIComponent(subject.name)}" class="btn btn-primary">Відкрити журнал</a>
+                                </div>
+                            </div>
+                        `;
+                        journalList.appendChild(card);
+                    }
+                } else if (user.role === 'teacher') {
+                    // Get teacher's subjects
+                    const teacherResponse = await fetch('/api/journal/subjects');
+                    if (!teacherResponse.ok) {
+                        throw new Error(`Failed to fetch teacher subjects: ${teacherResponse.statusText}`);
+                    }
+                    const teacherData = await teacherResponse.json();
+                    
+                    // Render the journals
+                    journalList.innerHTML = '';
+                    
+                    if (!Array.isArray(teacherData) || teacherData.length === 0) {
+                        journalList.innerHTML = '<p class="text-center">У вас поки немає доступних журналів.</p>';
+                        return;
+                    }
+                    
+                    // For teacher, show their subjects
+                    teacherData.forEach(subject => {
+                        const card = document.createElement('div');
+                        card.className = 'col-md-4 mb-3';
+                        
+                        const cardContent = `
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">${subject.name}</h5>
+                                    <p class="card-text">${subject.description || 'Опис відсутній'}</p>
+                                    <button 
+                                        class="btn btn-primary load-subject-groups" 
+                                        data-subject-id="${subject.id}" 
+                                        data-subject-name="${subject.name}">
+                                        Переглянути групи
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        card.innerHTML = cardContent;
+                        journalList.appendChild(card);
+                    });
+                    
+                    // Add event listeners to subject buttons
+                    document.querySelectorAll('.load-subject-groups').forEach(button => {
+                        button.addEventListener('click', async function() {
+                            const subjectId = this.getAttribute('data-subject-id');
+                            const subjectName = this.getAttribute('data-subject-name');
+                            
+                            try {
+                                // Load groups for this subject
+                                const groupsResponse = await fetch(`/api/journal/subject-groups?subject_id=${subjectId}`);
+                                if (!groupsResponse.ok) {
+                                    throw new Error('Failed to load subject groups');
+                                }
+                                const groupsData = await groupsResponse.json();
+                                
+                                // Update the journal list with groups
+                                journalList.innerHTML = `
+                                    <div class="col-12 mb-3">
+                                        <button class="btn btn-secondary back-to-subjects">← Назад до предметів</button>
+                                        <h4 class="mt-3">Групи для предмету "${subjectName}"</h4>
+                                    </div>
+                                `;
+                                
+                                if (!Array.isArray(groupsData) || groupsData.length === 0) {
+                                    journalList.innerHTML += '<div class="col-12"><p>Немає груп для цього предмету.</p></div>';
+                                } else {
+                                    // For each subject-group relation, load the group details
+                                    for (const sg of groupsData) {
+                                        const groupResponse = await fetch(`/api/journal/groups/${sg.group_id}`);
+                                        if (!groupResponse.ok) continue;
+                                        
+                                        const group = await groupResponse.json();
+                                        
+                                        // Get the faculty name
+                                        const facultyResponse = await fetch(`/api/journal/faculties/${group.faculty_id}`);
+                                        if (!facultyResponse.ok) continue;
+                                        
+                                        const faculty = await facultyResponse.json();
+                                        
+                                        const groupCard = document.createElement('div');
+                                        groupCard.className = 'col-md-4 mb-3';
+                                        
+                                        const groupCardContent = `
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">Група: ${group.name}</h5>
+                                                    <p class="card-text">Факультет: ${faculty.name}</p>
+                                                    <a href="/journal/${encodeURIComponent(faculty.name)}/${encodeURIComponent(group.name)}/${encodeURIComponent(subjectName)}" class="btn btn-primary">
+                                                        Відкрити журнал
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        `;
+                                        
+                                        groupCard.innerHTML = groupCardContent;
+                                        journalList.appendChild(groupCard);
+                                    }
+                                }
+                                
+                                // Add back button event listener
+                                document.querySelector('.back-to-subjects').addEventListener('click', function() {
+                                    loadJournals();
+                                });
+                            } catch (error) {
+                                console.error('Error loading groups for subject:', error);
+                                journalList.innerHTML = `<div class="col-12"><div class="alert alert-danger">Помилка завантаження груп: ${error.message}</div></div>`;
+                            }
+                        });
+                    });
+                } else if (user.role === 'admin') {
+                    // Get all faculties for admin
+                    const adminResponse = await fetch('/api/journal/faculties');
+                    if (!adminResponse.ok) {
+                        throw new Error(`Failed to fetch faculties: ${adminResponse.statusText}`);
+                    }
+                    const adminData = await adminResponse.json();
+                    
+                    // Render the journals
+                    journalList.innerHTML = '';
+                    
+                    if (!Array.isArray(adminData) || adminData.length === 0) {
+                        journalList.innerHTML = '<p class="text-center">У вас поки немає доступних журналів.</p>';
+                        return;
+                    }
+                    
+                    // For admin, show faculties
+                    adminData.forEach(faculty => {
+                        const card = document.createElement('div');
+                        card.className = 'col-md-4 mb-3';
+                        
+                        const cardContent = `
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Факультет: ${faculty.name}</h5>
+                                    <button 
+                                        class="btn btn-primary load-faculty-groups" 
+                                        data-faculty-id="${faculty.id}" 
+                                        data-faculty-name="${faculty.name}">
+                                        Переглянути факультет
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        card.innerHTML = cardContent;
+                        journalList.appendChild(card);
+                    });
+                    
+                    // Add event listeners to faculty buttons
+                    document.querySelectorAll('.load-faculty-groups').forEach(button => {
+                        button.addEventListener('click', async function() {
+                            const facultyId = this.getAttribute('data-faculty-id');
+                            const facultyName = this.getAttribute('data-faculty-name');
+                            
+                            try {
+                                // Load groups for this faculty
+                                const groupsResponse = await fetch(`/api/journal/groups?faculty_id=${facultyId}`);
+                                if (!groupsResponse.ok) {
+                                    throw new Error('Failed to load groups');
+                                }
+                                const groupsData = await groupsResponse.json();
+                                
+                                // Update the journal list with groups
+                                journalList.innerHTML = `
+                                    <div class="col-12 mb-3">
+                                        <button class="btn btn-secondary back-to-faculties">← Назад до факультетів</button>
+                                        <h4 class="mt-3">Групи факультету "${facultyName}"</h4>
+                                    </div>
+                                `;
+                                
+                                if (!Array.isArray(groupsData) || groupsData.length === 0) {
+                                    journalList.innerHTML += '<div class="col-12"><p>Немає груп у цьому факультеті.</p></div>';
+                                } else {
+                                    groupsData.forEach(group => {
+                                        const groupCard = document.createElement('div');
+                                        groupCard.className = 'col-md-4 mb-3';
+                                        
+                                        const groupCardContent = `
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">Група: ${group.name}</h5>
+                                                    <button 
+                                                        class="btn btn-primary load-group-subjects" 
+                                                        data-group-id="${group.id}" 
+                                                        data-group-name="${group.name}"
+                                                        data-faculty-name="${facultyName}">
+                                                        Переглянути предмети
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        `;
+                                        
+                                        groupCard.innerHTML = groupCardContent;
+                                        journalList.appendChild(groupCard);
+                                    });
+                                }
+                                
+                                // Add back button event listener
+                                document.querySelector('.back-to-faculties').addEventListener('click', function() {
+                                    loadJournals();
+                                });
+                                
+                                // Add event listeners to group buttons
+                                document.querySelectorAll('.load-group-subjects').forEach(groupButton => {
+                                    groupButton.addEventListener('click', async function() {
+                                        const groupId = this.getAttribute('data-group-id');
+                                        const groupName = this.getAttribute('data-group-name');
+                                        const facultyName = this.getAttribute('data-faculty-name');
+                                        
+                                        try {
+                                            // Load subjects for this group
+                                            const subjectsResponse = await fetch(`/api/journal/subject-groups?group_id=${groupId}`);
+                                            if (!subjectsResponse.ok) {
+                                                throw new Error('Failed to load subject groups');
+                                            }
+                                            const subjectsData = await subjectsResponse.json();
+                                            
+                                            // Update the journal list with subjects
+                                            journalList.innerHTML = `
+                                                <div class="col-12 mb-3">
+                                                    <button class="btn btn-secondary back-to-groups">← Назад до груп</button>
+                                                    <h4 class="mt-3">Предмети групи "${groupName}"</h4>
+                                                </div>
+                                            `;
+                                            
+                                            if (!Array.isArray(subjectsData) || subjectsData.length === 0) {
+                                                journalList.innerHTML += '<div class="col-12"><p>Немає предметів у цій групі.</p></div>';
+                                            } else {
+                                                // For each subject-group relation, load the subject details
+                                                for (const sg of subjectsData) {
+                                                    const subjectResponse = await fetch(`/api/journal/subjects/${sg.subject_id}`);
+                                                    if (!subjectResponse.ok) continue;
+                                                    
+                                                    const subject = await subjectResponse.json();
+                                                    const subjectCard = document.createElement('div');
+                                                    subjectCard.className = 'col-md-4 mb-3';
+                                                    
+                                                    const subjectCardContent = `
+                                                        <div class="card">
+                                                            <div class="card-body">
+                                                                <h5 class="card-title">Предмет: ${subject.name}</h5>
+                                                                <a href="/journal/${encodeURIComponent(facultyName)}/${encodeURIComponent(groupName)}/${encodeURIComponent(subject.name)}" class="btn btn-primary">
+                                                                    Відкрити журнал
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    `;
+                                                    
+                                                    subjectCard.innerHTML = subjectCardContent;
+                                                    journalList.appendChild(subjectCard);
+                                                }
+                                            }
+                                            
+                                            // Add back button event listener
+                                            document.querySelector('.back-to-groups').addEventListener('click', function() {
+                                                document.querySelector('.load-faculty-groups[data-faculty-id="' + facultyId + '"]').click();
+                                            });
+                                        } catch (error) {
+                                            console.error('Error loading subjects:', error);
+                                            journalList.innerHTML = `<div class="col-12"><div class="alert alert-danger">Помилка завантаження предметів: ${error.message}</div></div>`;
+                                        }
+                                    });
+                                });
+                            } catch (error) {
+                                console.error('Error loading groups:', error);
+                                journalList.innerHTML = `<div class="col-12"><div class="alert alert-danger">Помилка завантаження груп: ${error.message}</div></div>`;
+                            }
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading journals:', error);
+                if (journalList) {
+                    journalList.innerHTML = `<div class="col-12"><div class="alert alert-danger">Помилка завантаження журналів: ${error.message}</div></div>`;
+                }
+            }
+        };
+        
+        // Check if user is logged in and load journals
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (user.id && user.is_verified) {
+            loadJournals();
+        }
+        
+        // Logout handling
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                
+                try {
+                    await axios.post('/logout');
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/';
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    alert('Помилка при виході з системи.');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

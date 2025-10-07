@@ -1,0 +1,101 @@
+/* General styling */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar {
+    padding: 0.8rem 1rem;
+}
+
+/* Card styling */
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Table styling */
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+/* Journal specific styling */
+.journal-table {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.student-row:hover {
+    background-color: #f5f5f5;
+}
+
+/* Button styling */
+.btn {
+    border-radius: 0.3rem;
+}
+
+/* Form styling */
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+/* Login/Register styling */
+.auth-card {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Admin panel styling */
+.admin-sidebar {
+    background-color: #343a40;
+    color: white;
+    min-height: calc(100vh - 56px);
+}
+
+.admin-sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.admin-sidebar .nav-link:hover {
+    color: white;
+}
+
+.admin-sidebar .nav-link.active {
+    background-color: #007bff;
+}
+
+/* Profile page styling */
+.profile-avatar {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Custom alert styling */
+.alert-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    animation: fadeInOut 5s forwards;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; }
+} 

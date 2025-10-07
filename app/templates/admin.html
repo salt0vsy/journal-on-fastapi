@@ -1,0 +1,2075 @@
+{% extends "base.html" %}
+
+{% block title %}Адмін-панель - Електронний журнал{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Адміністративна панель</h1>
+    
+    <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">Користувачі</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="faculties-tab" data-bs-toggle="tab" data-bs-target="#faculties" type="button" role="tab">Факультети</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups" type="button" role="tab">Групи</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="subjects-tab" data-bs-toggle="tab" data-bs-target="#subjects" type="button" role="tab">Предмети</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="subject-groups-tab" data-bs-toggle="tab" data-bs-target="#subject-groups" type="button" role="tab">Зв'язки предмет-група</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="teacher-subjects-tab" data-bs-toggle="tab" data-bs-target="#teacher-subjects" type="button" role="tab">Викладачі-Предмети</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="student-subjects-tab" data-bs-toggle="tab" data-bs-target="#student-subjects" type="button" role="tab">Студенти-Предмети</button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="adminTabsContent">
+        <!-- Users Tab -->
+        <div class="tab-pane fade show active" id="users" role="tabpanel">
+            <div class="d-flex justify-content-between mb-3">
+                <h3>Користувачі системи</h3>
+                <button class="btn btn-primary" id="refreshUsers">Оновити</button>
+            </div>
+            
+            <ul class="nav nav-pills mb-3">
+                <li class="nav-item">
+                    <button class="nav-link active" id="all-users-tab" data-bs-toggle="pill" data-bs-target="#all-users" type="button">Усі користувачі</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="unverified-users-tab" data-bs-toggle="pill" data-bs-target="#unverified-users" type="button">Непідтверджені</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="teachers-tab" data-bs-toggle="pill" data-bs-target="#teachers" type="button">Викладачі</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="students-tab" data-bs-toggle="pill" data-bs-target="#students" type="button">Студенти</button>
+                </li>
+            </ul>
+            
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="all-users">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Ім'я користувача</th>
+                                    <th>Повне ім'я</th>
+                                    <th>Email</th>
+                                    <th>Роль</th>
+                                    <th>Статус</th>
+                                    <th>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allUsersTable">
+                                <tr>
+                                    <td colspan="7" class="text-center">Завантаження користувачів...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="unverified-users">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Ім'я користувача</th>
+                                    <th>Повне ім'я</th>
+                                    <th>Email</th>
+                                    <th>Роль</th>
+                                    <th>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unverifiedUsersTable">
+                                <tr>
+                                    <td colspan="6" class="text-center">Завантаження непідтверджених користувачів...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="teachers">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Ім'я користувача</th>
+                                    <th>Повне ім'я</th>
+                                    <th>Email</th>
+                                    <th>Статус</th>
+                                    <th>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teachersTable">
+                                <tr>
+                                    <td colspan="6" class="text-center">Завантаження викладачів...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="students">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Ім'я користувача</th>
+                                    <th>Повне ім'я</th>
+                                    <th>Email</th>
+                                    <th>Група</th>
+                                    <th>Статус</th>
+                                    <th>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTable">
+                                <tr>
+                                    <td colspan="7" class="text-center">Завантаження студентів...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Faculties Tab -->
+        <div class="tab-pane fade" id="faculties" role="tabpanel">
+            <div class="d-flex justify-content-between mb-3">
+                <h3>Факультети</h3>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFacultyModal">Додати факультет</button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Назва</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody id="facultiesTable">
+                        <tr>
+                            <td colspan="3" class="text-center">Завантаження факультетів...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Groups Tab -->
+        <div class="tab-pane fade" id="groups" role="tabpanel">
+            <div class="d-flex justify-content-between mb-3">
+                <h3>Групи</h3>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal">Додати групу</button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Назва</th>
+                            <th>Факультет</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody id="groupsTable">
+                        <tr>
+                            <td colspan="4" class="text-center">Завантаження груп...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Subjects Tab -->
+        <div class="tab-pane fade" id="subjects" role="tabpanel">
+            <div class="d-flex justify-content-between mb-3">
+                <h3>Предмети</h3>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSubjectModal">Додати предмет</button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Назва</th>
+                            <th>Опис</th>
+                            <th>Факультет</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subjectsTable">
+                        <tr>
+                            <td colspan="5" class="text-center">Завантаження предметів...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Subject-Groups Tab -->
+        <div class="tab-pane fade" id="subject-groups" role="tabpanel">
+            <div class="d-flex justify-content-between mb-3">
+                <h3>Зв'язки предмет-група</h3>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSubjectGroupModal">Додати зв'язок</button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Предмет</th>
+                            <th>Група</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subjectGroupsTable">
+                        <tr>
+                            <td colspan="4" class="text-center">Завантаження зв'язків...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Teacher-Subjects Tab -->
+        <div class="tab-pane fade" id="teacher-subjects" role="tabpanel">
+            <div class="d-flex justify-content-between mb-3">
+                <h3>Призначення предметів викладачам</h3>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#assignSubjectModal">Додати призначення</button>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <p>
+                        Тут ви можете призначити предмети викладачам. Викладач зможе бачити тільки ті предмети, які ви йому призначите.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="teacherFilter" class="form-label">Вибрати викладача:</label>
+                <select class="form-select" id="teacherFilter">
+                    <option value="">Виберіть викладача...</option>
+                </select>
+            </div>
+            
+            <div id="teacherSubjectsContainer" class="d-none">
+                <h4>Призначені предмети для: <span id="selectedTeacherName"></span></h4>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Назва предмету</th>
+                                <th>Факультет</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherSubjectsTable">
+                            <tr>
+                                <td colspan="4" class="text-center">Виберіть викладача зі списку</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h5 class="mt-4">Доступні предмети для призначення</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Назва предмету</th>
+                                <th>Факультет</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody id="availableSubjectsTable">
+                            <tr>
+                                <td colspan="4" class="text-center">Виберіть викладача зі списку</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student-Subjects Tab -->
+        <div class="tab-pane fade" id="student-subjects" role="tabpanel">
+            <div class="d-flex justify-content-between mb-3">
+                <h3>Управління студентами у предметах</h3>
+                <div>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStudentToSubjectModal">
+                        <i class="bi bi-plus-circle"></i> Додати студента до предмету
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5>Студенти у предметах</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Студент</th>
+                                    <th>Група</th>
+                                    <th>Предмет</th>
+                                    <th>Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentSubjectsTable">
+                                <tr>
+                                    <td colspan="5" class="text-center">Завантаження даних...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Add Faculty Modal -->
+<div class="modal fade" id="addFacultyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати факультет</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addFacultyForm">
+                    <div class="mb-3">
+                        <label for="facultyName" class="form-label">Назва</label>
+                        <input type="text" class="form-control" id="facultyName" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="saveFacultyBtn">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Group Modal -->
+<div class="modal fade" id="addGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати групу</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addGroupForm">
+                    <div class="mb-3">
+                        <label for="groupName" class="form-label">Назва</label>
+                        <input type="text" class="form-control" id="groupName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="groupFaculty" class="form-label">Факультет</label>
+                        <select class="form-select" id="groupFaculty" required>
+                            <option value="">Виберіть факультет</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="saveGroupBtn">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Subject Modal -->
+<div class="modal fade" id="addSubjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати предмет</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addSubjectForm">
+                    <div class="mb-3">
+                        <label for="subjectName" class="form-label">Назва</label>
+                        <input type="text" class="form-control" id="subjectName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subjectDescription" class="form-label">Опис</label>
+                        <textarea class="form-control" id="subjectDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subjectFaculty" class="form-label">Факультет</label>
+                        <select class="form-select" id="subjectFaculty" required>
+                            <option value="">Виберіть факультет</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="saveSubjectBtn">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Subject-Group Modal -->
+<div class="modal fade" id="addSubjectGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати зв'язок предмет-група</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addSubjectGroupForm">
+                    <div class="mb-3">
+                        <label for="subjectGroupSubject" class="form-label">Предмет</label>
+                        <select class="form-select" id="subjectGroupSubject" required>
+                            <option value="">Виберіть предмет</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subjectGroupGroup" class="form-label">Група</label>
+                        <select class="form-select" id="subjectGroupGroup" required>
+                            <option value="">Виберіть групу</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="saveSubjectGroupBtn">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Subject to Teacher Modal -->
+<div class="modal fade" id="assignSubjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Призначити предмет викладачу</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="assignSubjectForm">
+                    <div class="mb-3">
+                        <label for="assignTeacher" class="form-label">Викладач</label>
+                        <select class="form-select" id="assignTeacher" required>
+                            <option value="">Виберіть викладача</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assignSubject" class="form-label">Предмет</label>
+                        <select class="form-select" id="assignSubject" required>
+                            <option value="">Виберіть предмет</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="assignSubjectBtn">Призначити</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Student to Subject Modal -->
+<div class="modal fade" id="addStudentToSubjectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати студента до предмету</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStudentToSubjectForm">
+                    <div class="mb-3">
+                        <label for="studentSubjectGroup" class="form-label">Група</label>
+                        <select class="form-select" id="studentSubjectGroup" required>
+                            <option value="">Виберіть групу</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="studentSubjectStudent" class="form-label">Студент</label>
+                        <select class="form-select" id="studentSubjectStudent" required>
+                            <option value="">Виберіть студента</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="studentSubjectSubject" class="form-label">Предмет</label>
+                        <select class="form-select" id="studentSubjectSubject" required>
+                            <option value="">Виберіть предмет</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="saveStudentSubjectBtn">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Додаємо новий модальний діалог для зміни групи студента -->
+<div class="modal fade" id="changeStudentGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Змінити групу студента</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="changeStudentGroupForm">
+                    <input type="hidden" id="studentIdForGroupChange">
+                    <div class="mb-3">
+                        <label for="studentCurrentGroup" class="form-label">Поточна група</label>
+                        <input type="text" class="form-control" id="studentCurrentGroup" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="studentNewGroup" class="form-label">Нова група</label>
+                        <select class="form-select" id="studentNewGroup" required>
+                            <option value="">Виберіть групу</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="saveStudentGroupBtn">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Define global variables
+    let faculties = [];
+    let groups = [];
+    let subjects = [];
+    let subjectGroups = [];
+    let teacherSubjects = [];
+    let teachers = [];
+    let students = [];
+    let studentSubjects = [];
+    
+    // Load all data when the page loads
+    loadUsers();
+    loadFaculties();
+    loadGroups();
+    loadSubjects();
+    loadSubjectGroups();
+    loadTeachers();
+    
+    // Add event listener for teacher filter dropdown
+    document.getElementById('teacherFilter').addEventListener('change', function() {
+        loadTeacherSubjects();
+    });
+    
+    // Tab change event listeners
+    document.querySelectorAll('#adminTabs button').forEach(button => {
+        button.addEventListener('click', function() {
+            const target = this.getAttribute('data-bs-target').substring(1);
+            if (target === 'users') loadUsers();
+            else if (target === 'faculties') loadFaculties();
+            else if (target === 'groups') loadGroups();
+            else if (target === 'subjects') loadSubjects();
+            else if (target === 'subject-groups') loadSubjectGroups();
+            else if (target === 'teacher-subjects') {
+                // Make sure all needed data is loaded before loading teacher subjects
+                Promise.all([
+                    loadFaculties(),
+                    loadSubjects(),
+                    loadTeachers()
+                ]).then(() => {
+                    loadTeacherSubjects();
+                }).catch(error => {
+                    console.error('Error loading prerequisites for teacher subjects:', error);
+                    showError('Failed to load prerequisite data');
+                });
+            }
+            else if (target === 'student-subjects') loadStudentSubjects();
+        });
+    });
+    
+    // Refresh buttons
+    document.getElementById('refreshUsers').addEventListener('click', loadUsers);
+    
+    // Load users function
+    async function loadUsers() {
+        try {
+            // Load all users
+            const response = await axios.get('/users', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            renderUsers(response.data, 'allUsersTable');
+            
+            // Load unverified users
+            const unverifiedResponse = await axios.get('/users/unverified', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            renderUsers(unverifiedResponse.data, 'unverifiedUsersTable');
+            
+            // Load teachers
+            const teachersResponse = await axios.get('/users/role/teacher', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            renderUsers(teachersResponse.data, 'teachersTable', true);
+            
+            // Load students
+            const studentsResponse = await axios.get('/users/role/student', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            renderUsers(studentsResponse.data, 'studentsTable', true);
+            
+        } catch (error) {
+            console.error('Error loading users:', error);
+            showErrorMessage('Помилка завантаження користувачів', error);
+        }
+    }
+    
+    // Render users in a table
+    function renderUsers(users, tableId, skipRole = false) {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        
+        if (users.length === 0) {
+            table.innerHTML = `<tr><td colspan="${skipRole ? '6' : '7'}" class="text-center">Немає даних для відображення</td></tr>`;
+            return;
+        }
+        
+        let html = '';
+        users.forEach(user => {
+            html += `<tr>
+                <td>${user.id}</td>
+                <td>${user.username}</td>
+                <td>${user.full_name}</td>
+                <td>${user.email}</td>`;
+                
+            if (!skipRole) {
+                html += `<td>${user.role}</td>`;
+            }
+            
+            if (tableId === 'studentsTable') {
+                html += `<td>${user.group ? user.group.name : 'Не призначено'}</td>`;
+            }
+            
+            html += `<td>${user.is_active ? (user.is_verified ? 'Активний' : 'Не підтверджено') : 'Неактивний'}</td>
+                <td>
+                    ${!user.is_verified ? `<button class="btn btn-sm btn-success verify-user" data-id="${user.id}">Підтвердити</button>` : ''}
+                    ${user.is_active ? `<button class="btn btn-sm btn-warning deactivate-user" data-id="${user.id}">Деактивувати</button>` : 
+                        `<button class="btn btn-sm btn-success activate-user" data-id="${user.id}">Активувати</button>`}
+                    ${tableId === 'studentsTable' ? `<button class="btn btn-sm btn-info change-group" data-id="${user.id}" data-username="${user.username}" data-current-group="${user.group ? user.group.name : ''}" data-group-id="${user.group ? user.group.id : ''}">Змінити групу</button>` : ''}
+                    <button class="btn btn-sm btn-danger delete-user" data-id="${user.id}">Видалити</button>
+                </td>
+            </tr>`;
+        });
+        
+        table.innerHTML = html;
+        
+        // Add event listeners to buttons
+        table.querySelectorAll('.verify-user').forEach(button => {
+            button.addEventListener('click', function() {
+                verifyUser(this.getAttribute('data-id'));
+            });
+        });
+        
+        table.querySelectorAll('.deactivate-user').forEach(button => {
+            button.addEventListener('click', function() {
+                deactivateUser(this.getAttribute('data-id'));
+            });
+        });
+        
+        table.querySelectorAll('.activate-user').forEach(button => {
+            button.addEventListener('click', function() {
+                activateUser(this.getAttribute('data-id'));
+            });
+        });
+        
+        table.querySelectorAll('.delete-user').forEach(button => {
+            button.addEventListener('click', function() {
+                deleteUser(this.getAttribute('data-id'));
+            });
+        });
+        
+        // Add event listener for change group button
+        table.querySelectorAll('.change-group').forEach(button => {
+            button.addEventListener('click', function() {
+                openChangeGroupModal(
+                    this.getAttribute('data-id'), 
+                    this.getAttribute('data-username'),
+                    this.getAttribute('data-current-group'),
+                    this.getAttribute('data-group-id')
+                );
+            });
+        });
+    }
+    
+    // Verify user function
+    async function verifyUser(userId) {
+        try {
+            await axios.put(`/users/${userId}/verify`, {}, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            showSuccessMessage('Користувача підтверджено успішно');
+            loadUsers();
+        } catch (error) {
+            console.error('Error verifying user:', error);
+            showErrorMessage('Помилка при підтвердженні користувача', error);
+        }
+    }
+    
+    // Deactivate user function
+    async function deactivateUser(userId) {
+        try {
+            await axios.put(`/users/${userId}/deactivate`, {}, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            showSuccessMessage('Користувача деактивовано успішно');
+            loadUsers();
+        } catch (error) {
+            console.error('Error deactivating user:', error);
+            showErrorMessage('Помилка при деактивації користувача', error);
+        }
+    }
+    
+    // Activate user function
+    async function activateUser(userId) {
+        try {
+            await axios.put(`/users/${userId}`, {
+                is_active: true
+            }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            showSuccessMessage('Користувача активовано успішно');
+            loadUsers();
+        } catch (error) {
+            console.error('Error activating user:', error);
+            showErrorMessage('Помилка при активації користувача', error);
+        }
+    }
+    
+    // Delete user function
+    async function deleteUser(userId) {
+        if (confirm('Ви впевнені, що хочете повністю видалити цього користувача? Ця дія є незворотною.')) {
+            try {
+                await axios.delete(`/users/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                showSuccessMessage('Користувача видалено успішно');
+                loadUsers();
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showErrorMessage('Помилка при видаленні користувача', error);
+            }
+        }
+    }
+    
+    // Load faculties function
+    async function loadFaculties() {
+        try {
+            const response = await fetch('/api/journal/faculties');
+            if (!response.ok) {
+                throw new Error('Failed to load faculties');
+            }
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid data format received');
+            }
+            faculties = data;
+            renderFaculties();
+        } catch (error) {
+            console.error('Error loading faculties:', error);
+            showError('Failed to load faculties');
+        }
+    }
+    
+    // Render faculties in a table
+    function renderFaculties() {
+        const table = document.getElementById('facultiesTable');
+        if (!table) return;
+        
+        if (faculties.length === 0) {
+            table.innerHTML = '<tr><td colspan="3" class="text-center">Немає даних для відображення</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        faculties.forEach(faculty => {
+            html += `<tr>
+                <td>${faculty.id}</td>
+                <td>${faculty.name}</td>
+                <td>
+                    <button class="btn btn-sm btn-danger delete-faculty" data-id="${faculty.id}">Видалити</button>
+                </td>
+            </tr>`;
+        });
+        
+        table.innerHTML = html;
+        
+        // Add event listeners for delete buttons
+        table.querySelectorAll('.delete-faculty').forEach(button => {
+            button.addEventListener('click', function() {
+                deleteFaculty(this.getAttribute('data-id'));
+            });
+        });
+        
+        // Populate faculty dropdowns
+        populateFacultyDropdowns(faculties);
+    }
+    
+    // Delete faculty function
+    async function deleteFaculty(facultyId) {
+        if (confirm('Ви впевнені, що хочете видалити цей факультет? Це також видалить усі пов\'язані групи, предмети та зв\'язки.')) {
+            try {
+                await axios.delete(`/api/journal/faculties/${facultyId}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                showSuccessMessage('Факультет видалено успішно');
+                loadFaculties();
+                loadGroups();
+                loadSubjects();
+                loadSubjectGroups();
+            } catch (error) {
+                console.error('Error deleting faculty:', error);
+                showErrorMessage('Помилка при видаленні факультету', error);
+            }
+        }
+    }
+    
+    // Populate faculty dropdowns
+    function populateFacultyDropdowns(faculties) {
+        const dropdowns = [
+            document.getElementById('groupFaculty'),
+            document.getElementById('subjectFaculty')
+        ];
+        
+        dropdowns.forEach(dropdown => {
+            if (!dropdown) return;
+            
+            // Clear all options except the first one
+            while (dropdown.options.length > 1) {
+                dropdown.remove(1);
+            }
+            
+            // Add new options
+            faculties.forEach(faculty => {
+                const option = document.createElement('option');
+                option.value = faculty.id;
+                option.textContent = faculty.name;
+                dropdown.appendChild(option);
+            });
+        });
+    }
+    
+    // Save faculty button event listener
+    document.getElementById('saveFacultyBtn').addEventListener('click', async function() {
+        const name = document.getElementById('facultyName').value;
+        
+        if (!name) {
+            showErrorMessage('Заповніть усі поля');
+            return;
+        }
+        
+        try {
+            await axios.post('/api/journal/faculties', {
+                name
+            }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            showSuccessMessage('Факультет додано успішно');
+            document.getElementById('facultyName').value = '';
+            loadFaculties();
+            
+            // Close the modal
+            bootstrap.Modal.getInstance(document.getElementById('addFacultyModal')).hide();
+        } catch (error) {
+            console.error('Error adding faculty:', error);
+            showErrorMessage('Помилка при додаванні факультету', error);
+        }
+    });
+    
+    // Load groups function
+    async function loadGroups() {
+        try {
+            const response = await fetch('/api/journal/groups');
+            if (!response.ok) {
+                throw new Error('Failed to load groups');
+            }
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid data format received');
+            }
+            groups = data;
+            renderGroups();
+        } catch (error) {
+            console.error('Error loading groups:', error);
+            showError('Failed to load groups');
+        }
+    }
+    
+    // Render groups in a table
+    function renderGroups() {
+        const table = document.getElementById('groupsTable');
+        if (!table) return;
+        
+        if (groups.length === 0) {
+            table.innerHTML = '<tr><td colspan="4" class="text-center">Немає даних для відображення</td></tr>';
+            return;
+        }
+        
+        // Create faculty map for lookup
+        const facultyMap = {};
+        faculties.forEach(faculty => {
+            facultyMap[faculty.id] = faculty.name;
+        });
+        
+        let html = '';
+        groups.forEach(group => {
+            html += `<tr>
+                <td>${group.id}</td>
+                <td>${group.name}</td>
+                <td>${facultyMap[group.faculty_id] || 'Невідомо'}</td>
+                <td>
+                    <button class="btn btn-sm btn-danger delete-group" data-id="${group.id}">Видалити</button>
+                </td>
+            </tr>`;
+        });
+        
+        table.innerHTML = html;
+        
+        // Add event listeners for delete buttons
+        table.querySelectorAll('.delete-group').forEach(button => {
+            button.addEventListener('click', function() {
+                deleteGroup(this.getAttribute('data-id'));
+            });
+        });
+        
+        // Populate group dropdowns
+        populateGroupDropdowns(groups);
+    }
+    
+    // Delete group function
+    async function deleteGroup(groupId) {
+        if (confirm('Ви впевнені, що хочете видалити цю групу? Це також видалить усі пов\'язані зв\'язки.')) {
+            try {
+                await axios.delete(`/api/journal/groups/${groupId}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                showSuccessMessage('Групу видалено успішно');
+                loadGroups();
+                loadSubjectGroups();
+            } catch (error) {
+                console.error('Error deleting group:', error);
+                showErrorMessage('Помилка при видаленні групи', error);
+            }
+        }
+    }
+    
+    // Populate group dropdowns
+    function populateGroupDropdowns(groups) {
+        const dropdown = document.getElementById('subjectGroupGroup');
+        if (!dropdown) return;
+        
+        // Clear all options except the first one
+        while (dropdown.options.length > 1) {
+            dropdown.remove(1);
+        }
+        
+        // Add new options
+        groups.forEach(group => {
+            const option = document.createElement('option');
+            option.value = group.id;
+            option.textContent = group.name;
+            dropdown.appendChild(option);
+        });
+    }
+    
+    // Save group button event listener
+    document.getElementById('saveGroupBtn').addEventListener('click', async function() {
+        const name = document.getElementById('groupName').value;
+        const facultyId = document.getElementById('groupFaculty').value;
+        
+        if (!name || !facultyId) {
+            showErrorMessage('Заповніть усі поля');
+            return;
+        }
+        
+        try {
+            await axios.post('/api/journal/groups', {
+                name,
+                faculty_id: parseInt(facultyId)
+            }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            showSuccessMessage('Групу додано успішно');
+            document.getElementById('groupName').value = '';
+            document.getElementById('groupFaculty').selectedIndex = 0;
+            loadGroups();
+            
+            // Close the modal
+            bootstrap.Modal.getInstance(document.getElementById('addGroupModal')).hide();
+        } catch (error) {
+            console.error('Error adding group:', error);
+            showErrorMessage('Помилка при додаванні групи', error);
+        }
+    });
+    
+    // Load subjects function
+    async function loadSubjects() {
+        try {
+            const response = await fetch('/api/journal/subjects');
+            if (!response.ok) {
+                throw new Error('Failed to load subjects');
+            }
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid data format received');
+            }
+            subjects = data;
+            renderSubjects();
+        } catch (error) {
+            console.error('Error loading subjects:', error);
+            showError('Failed to load subjects');
+        }
+    }
+    
+    // Render subjects in a table
+    function renderSubjects() {
+        const table = document.getElementById('subjectsTable');
+        if (!table) return;
+        
+        if (subjects.length === 0) {
+            table.innerHTML = '<tr><td colspan="5" class="text-center">Немає даних для відображення</td></tr>';
+            return;
+        }
+        
+        // Create faculty map for lookup
+        const facultyMap = {};
+        faculties.forEach(faculty => {
+            facultyMap[faculty.id] = faculty.name;
+        });
+        
+        let html = '';
+        subjects.forEach(subject => {
+            html += `<tr>
+                <td>${subject.id}</td>
+                <td>${subject.name}</td>
+                <td>${subject.description || '-'}</td>
+                <td>${facultyMap[subject.faculty_id] || 'Невідомо'}</td>
+                <td>
+                    <button class="btn btn-sm btn-danger delete-subject" data-id="${subject.id}">Видалити</button>
+                </td>
+            </tr>`;
+        });
+        
+        table.innerHTML = html;
+        
+        // Add event listeners for delete buttons
+        table.querySelectorAll('.delete-subject').forEach(button => {
+            button.addEventListener('click', function() {
+                deleteSubject(this.getAttribute('data-id'));
+            });
+        });
+        
+        // Populate subject dropdowns
+        populateSubjectDropdowns(subjects);
+    }
+    
+    // Delete subject function
+    async function deleteSubject(subjectId) {
+        if (confirm('Ви впевнені, що хочете видалити цей предмет? Це також видалить усі пов\'язані зв\'язки.')) {
+            try {
+                await axios.delete(`/api/journal/subjects/${subjectId}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                showSuccessMessage('Предмет видалено успішно');
+                loadSubjects();
+                loadSubjectGroups();
+            } catch (error) {
+                console.error('Error deleting subject:', error);
+                showErrorMessage('Помилка при видаленні предмету', error);
+            }
+        }
+    }
+    
+    // Populate subject dropdowns
+    function populateSubjectDropdowns(subjects) {
+        const dropdown = document.getElementById('subjectGroupSubject');
+        if (!dropdown) return;
+        
+        // Clear all options except the first one
+        while (dropdown.options.length > 1) {
+            dropdown.remove(1);
+        }
+        
+        // Add new options
+        subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.id;
+            option.textContent = subject.name;
+            dropdown.appendChild(option);
+        });
+    }
+    
+    // Save subject button event listener
+    document.getElementById('saveSubjectBtn').addEventListener('click', async function() {
+        const name = document.getElementById('subjectName').value;
+        const description = document.getElementById('subjectDescription').value;
+        const facultyId = document.getElementById('subjectFaculty').value;
+        
+        if (!name || !facultyId) {
+            showErrorMessage('Заповніть усі обов\'язкові поля');
+            return;
+        }
+        
+        try {
+            await axios.post('/api/journal/subjects', {
+                name,
+                description: description || null,
+                faculty_id: parseInt(facultyId)
+            }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            showSuccessMessage('Предмет додано успішно');
+            document.getElementById('subjectName').value = '';
+            document.getElementById('subjectDescription').value = '';
+            document.getElementById('subjectFaculty').selectedIndex = 0;
+            loadSubjects();
+            
+            // Close the modal
+            bootstrap.Modal.getInstance(document.getElementById('addSubjectModal')).hide();
+        } catch (error) {
+            console.error('Error adding subject:', error);
+            showErrorMessage('Помилка при додаванні предмету', error);
+        }
+    });
+    
+    // Load subject-groups function
+    async function loadSubjectGroups() {
+        try {
+            // First, make sure we load the latest groups data
+            await loadGroups();
+            
+            const response = await fetch('/api/journal/subject-groups');
+            if (!response.ok) {
+                throw new Error('Failed to load subject groups');
+            }
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid data format received');
+            }
+            subjectGroups = data;
+            renderSubjectGroups();
+        } catch (error) {
+            console.error('Error loading subject groups:', error);
+            showError('Failed to load subject groups');
+        }
+    }
+    
+    // Render subject-groups in a table
+    function renderSubjectGroups() {
+        const table = document.getElementById('subjectGroupsTable');
+        if (!table) return;
+        
+        if (subjectGroups.length === 0) {
+            table.innerHTML = '<tr><td colspan="4" class="text-center">Немає даних для відображення</td></tr>';
+            return;
+        }
+        
+        // Create subject and group maps for lookup
+        const subjectMap = {};
+        subjects.forEach(subject => {
+            subjectMap[subject.id] = subject.name;
+        });
+        
+        const groupMap = {};
+        groups.forEach(group => {
+            groupMap[group.id] = group.name;
+        });
+        
+        // Get any missing groups
+        const missingGroupIds = subjectGroups
+            .map(sg => sg.group_id)
+            .filter(id => !groupMap[id]);
+        
+        // If there are missing groups, fetch them first
+        if (missingGroupIds.length > 0) {
+            const uniqueMissingGroupIds = [...new Set(missingGroupIds)];
+            Promise.all(uniqueMissingGroupIds.map(groupId => 
+                fetch(`/api/journal/groups/${groupId}`)
+                    .then(res => res.ok ? res.json() : null)
+                    .then(group => {
+                        if (group) {
+                            groupMap[group.id] = group.name;
+                            // Also add to our groups array for future reference
+                            if (!groups.some(g => g.id === group.id)) {
+                                groups.push(group);
+                            }
+                        }
+                    })
+                    .catch(err => console.error(`Error fetching group ${groupId}:`, err))
+            )).then(() => {
+                // After fetching any missing groups, render the table
+                renderSubjectGroupsTable();
+            });
+        } else {
+            // If no missing groups, render immediately
+            renderSubjectGroupsTable();
+        }
+        
+        function renderSubjectGroupsTable() {
+            let html = '';
+            subjectGroups.forEach(subjectGroup => {
+                html += `<tr>
+                    <td>${subjectGroup.id}</td>
+                    <td>${subjectMap[subjectGroup.subject_id] || 'Невідомо'}</td>
+                    <td>${groupMap[subjectGroup.group_id] || 'Невідомо'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger delete-subject-group" data-id="${subjectGroup.id}">Видалити</button>
+                    </td>
+                </tr>`;
+            });
+            
+            table.innerHTML = html;
+            
+            // Add event listeners for delete buttons
+            table.querySelectorAll('.delete-subject-group').forEach(button => {
+                button.addEventListener('click', function() {
+                    deleteSubjectGroup(this.getAttribute('data-id'));
+                });
+            });
+        }
+    }
+    
+    // Delete subject-group function
+    async function deleteSubjectGroup(subjectGroupId) {
+        if (confirm('Ви впевнені, що хочете видалити цей зв\'язок?')) {
+            try {
+                await axios.delete(`/api/journal/subject-groups/${subjectGroupId}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                showSuccessMessage('Зв\'язок видалено успішно');
+                loadSubjectGroups();
+            } catch (error) {
+                console.error('Error deleting subject-group:', error);
+                showErrorMessage('Помилка при видаленні зв\'язку', error);
+            }
+        }
+    }
+    
+    // Load teacher-subjects function
+    async function loadTeacherSubjects() {
+        try {
+            const response = await fetch('/api/journal/teacher-subjects', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            if (!response.ok) {
+                console.warn('Server returned error, initializing empty array');
+                teacherSubjects = [];
+                renderTeacherSubjects();
+                throw new Error('Failed to load teacher subjects');
+            }
+            
+            // Check the content type to handle potential non-JSON responses
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                console.warn('Server returned non-JSON response, initializing empty array');
+                teacherSubjects = [];
+                renderTeacherSubjects();
+                throw new Error('Server returned non-JSON response');
+            }
+            
+            try {
+                const data = await response.json();
+                if (!Array.isArray(data)) {
+                    console.warn('Server returned non-array data, initializing empty array');
+                    teacherSubjects = [];
+                } else {
+                    teacherSubjects = data;
+                }
+                renderTeacherSubjects();
+            } catch (jsonError) {
+                console.warn('JSON parse error, initializing empty array', jsonError);
+                teacherSubjects = [];
+                renderTeacherSubjects();
+                throw new Error('Error parsing JSON response');
+            }
+        } catch (error) {
+            console.error('Error loading teacher subjects:', error);
+            showError('Failed to load teacher subjects');
+        }
+    }
+    
+    // Populate teachers dropdown
+    async function populateTeachersDropdown() {
+        try {
+            const teachersResponse = await axios.get('/users/role/teacher', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            const teachers = teachersResponse.data;
+            
+            // Populate both the filter dropdown and the assign modal dropdown
+            const dropdowns = [
+                document.getElementById('teacherFilter'),
+                document.getElementById('assignTeacher')
+            ];
+            
+            dropdowns.forEach(dropdown => {
+                if (!dropdown) return;
+                
+                // Save the selected value
+                const selectedValue = dropdown.value;
+                
+                // Clear options except the first one
+                while (dropdown.options.length > 1) {
+                    dropdown.remove(1);
+                }
+                
+                // Add teachers as options
+                teachers.forEach(teacher => {
+                    const option = document.createElement('option');
+                    option.value = teacher.id;
+                    option.textContent = `${teacher.full_name} (${teacher.username})`;
+                    dropdown.appendChild(option);
+                });
+                
+                // Restore selected value if it exists in new options
+                if (selectedValue) {
+                    dropdown.value = selectedValue;
+                }
+            });
+            
+            // Also populate the subjects dropdown in the assign modal
+            const subjectsResponse = await axios.get('/api/journal/subjects', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            const subjectsData = subjectsResponse.data;
+            const subjectDropdown = document.getElementById('assignSubject');
+            
+            if (subjectDropdown && Array.isArray(subjectsData)) {
+                // Clear options except the first one
+                while (subjectDropdown.options.length > 1) {
+                    subjectDropdown.remove(1);
+                }
+                
+                // Add subjects as options
+                subjectsData.forEach(subject => {
+                    const option = document.createElement('option');
+                    option.value = subject.id;
+                    option.textContent = subject.name;
+                    subjectDropdown.appendChild(option);
+                });
+            }
+            
+        } catch (error) {
+            console.error('Error loading teachers:', error);
+            showError('Failed to load teachers');
+        }
+    }
+    
+    // Render teacher subjects
+    function renderTeacherSubjects() {
+        try {
+            const teacherId = document.getElementById('teacherFilter').value;
+            if (!teacherId) {
+                document.getElementById('teacherSubjectsContainer').classList.add('d-none');
+                return;
+            }
+            
+            document.getElementById('teacherSubjectsContainer').classList.remove('d-none');
+            
+            // Make sure teachers array is initialized
+            if (!Array.isArray(teachers)) {
+                console.error('Teachers array is not initialized');
+                return;
+            }
+            
+            // Find the teacher in the teachers array
+            const teacher = teachers.find(t => t.id.toString() === teacherId);
+            if (teacher) {
+                document.getElementById('selectedTeacherName').textContent = teacher.full_name;
+            }
+            
+            // Make sure faculties and subjects arrays are initialized
+            if (!Array.isArray(faculties) || !Array.isArray(subjects) || !Array.isArray(teacherSubjects)) {
+                console.error('Required data arrays are not initialized');
+                return;
+            }
+            
+            // Create faculty map for lookup
+            const facultyMap = {};
+            faculties.forEach(faculty => {
+                facultyMap[faculty.id] = faculty.name;
+            });
+            
+            // Filter teacher's subjects
+            const teacherSubjectsData = subjects.filter(subject => 
+                teacherSubjects.some(ts => 
+                    ts.teacher_id.toString() === teacherId && 
+                    ts.subject_id.toString() === subject.id.toString()
+                )
+            );
+            
+            // Render teacher's subjects
+            renderTeacherSubjectsTable(teacherSubjectsData, facultyMap);
+            
+            // Render available subjects
+            const teacherSubjectIds = teacherSubjectsData.map(s => s.id);
+            const availableSubjects = subjects.filter(subject => 
+                !teacherSubjectIds.includes(subject.id)
+            );
+            renderAvailableSubjectsTable(availableSubjects, facultyMap, teacherId);
+        } catch (error) {
+            console.error('Error rendering teacher subjects:', error);
+            showError('Failed to render teacher subjects');
+        }
+    }
+    
+    // Render teacher's assigned subjects
+    function renderTeacherSubjectsTable(teacherSubjects, faculties) {
+        const table = document.getElementById('teacherSubjectsTable');
+        if (!table) return;
+        
+        if (teacherSubjects.length === 0) {
+            table.innerHTML = '<tr><td colspan="4" class="text-center">Немає призначених предметів</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        teacherSubjects.forEach(subject => {
+            html += `<tr>
+                <td>${subject.id}</td>
+                <td>${subject.name}</td>
+                <td>${faculties[subject.faculty_id] || 'Невідомо'}</td>
+                <td>
+                    <button class="btn btn-sm btn-danger remove-subject" data-teacher="${document.getElementById('teacherFilter').value}" data-subject="${subject.id}">Видалити</button>
+                </td>
+            </tr>`;
+        });
+        
+        table.innerHTML = html;
+        
+        // Add event listeners for remove buttons
+        table.querySelectorAll('.remove-subject').forEach(button => {
+            button.addEventListener('click', function() {
+                removeSubjectFromTeacher(
+                    this.getAttribute('data-teacher'),
+                    this.getAttribute('data-subject')
+                );
+            });
+        });
+    }
+    
+    // Render available subjects that can be assigned
+    function renderAvailableSubjectsTable(subjects, faculties, teacherId) {
+        const table = document.getElementById('availableSubjectsTable');
+        if (!table) return;
+        
+        if (subjects.length === 0) {
+            table.innerHTML = '<tr><td colspan="4" class="text-center">Немає доступних предметів для призначення</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        subjects.forEach(subject => {
+            html += `<tr>
+                <td>${subject.id}</td>
+                <td>${subject.name}</td>
+                <td>${faculties[subject.faculty_id] || 'Невідомо'}</td>
+                <td>
+                    <button class="btn btn-sm btn-success assign-subject" data-teacher="${teacherId}" data-subject="${subject.id}">Призначити</button>
+                </td>
+            </tr>`;
+        });
+        
+        table.innerHTML = html;
+        
+        // Add event listeners for assign buttons
+        table.querySelectorAll('.assign-subject').forEach(button => {
+            button.addEventListener('click', function() {
+                assignSubjectToTeacher(
+                    this.getAttribute('data-teacher'),
+                    this.getAttribute('data-subject')
+                );
+            });
+        });
+    }
+    
+    // Load teachers function
+    async function loadTeachers() {
+        try {
+            const response = await fetch('/users/role/teacher', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Failed to load teachers');
+            }
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid data format received');
+            }
+            teachers = data;
+            renderTeachers();
+        } catch (error) {
+            console.error('Error loading teachers:', error);
+            showError('Failed to load teachers');
+        }
+    }
+    
+    // Render teachers function
+    function renderTeachers() {
+        // Populate the teachers dropdown for teacher-subjects tab
+        populateTeachersDropdown();
+    }
+    
+    // Assign subject to teacher
+    async function assignSubjectToTeacher(teacherId, subjectId) {
+        try {
+            const response = await fetch(`/api/journal/teachers/${teacherId}/subjects/${subjectId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to assign subject to teacher');
+            }
+            
+            showSuccessMessage('Предмет успішно призначено викладачу');
+            loadTeacherSubjects();
+        } catch (error) {
+            console.error('Error assigning subject:', error);
+            showErrorMessage('Помилка при призначенні предмету', error);
+        }
+    }
+    
+    // Remove subject from teacher
+    async function removeSubjectFromTeacher(teacherId, subjectId) {
+        if (confirm('Ви впевнені, що хочете видалити цей предмет для викладача?')) {
+            try {
+                const response = await fetch(`/api/journal/teachers/${teacherId}/subjects/${subjectId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to remove subject from teacher');
+                }
+                
+                showSuccessMessage('Предмет успішно видалено для викладача');
+                loadTeacherSubjects();
+            } catch (error) {
+                console.error('Error removing subject:', error);
+                showErrorMessage('Помилка при видаленні предмету', error);
+            }
+        }
+    }
+    
+    // Handler for the assign button in the modal
+    document.getElementById('assignSubjectBtn').addEventListener('click', async function() {
+        const teacherId = document.getElementById('assignTeacher').value;
+        const subjectId = document.getElementById('assignSubject').value;
+        
+        if (!teacherId || !subjectId) {
+            showErrorMessage('Виберіть викладача та предмет');
+            return;
+        }
+        
+        try {
+            await assignSubjectToTeacher(teacherId, subjectId);
+            
+            // Close the modal
+            bootstrap.Modal.getInstance(document.getElementById('assignSubjectModal')).hide();
+            
+            // Update the teacher filter to show the assigned teacher
+            document.getElementById('teacherFilter').value = teacherId;
+            loadTeacherSubjects();
+        } catch (error) {
+            console.error('Error assigning subject:', error);
+            showErrorMessage('Помилка при призначенні предмету', error);
+        }
+    });
+    
+    // Helper functions for showing messages
+    function showSuccessMessage(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.container');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            setTimeout(() => alertDiv.remove(), 300);
+        }, 3000);
+    }
+    
+    function showError(message, error) {
+        showErrorMessage(message, error);
+    }
+    
+    function showErrorMessage(message, error) {
+        let errorDetail = '';
+        if (error && error.response && error.response.data) {
+            errorDetail = error.response.data.detail || '';
+        }
+        
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+        alertDiv.innerHTML = `
+            ${message}${errorDetail ? ': ' + errorDetail : ''}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.container');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            setTimeout(() => alertDiv.remove(), 300);
+        }, 5000);
+    }
+
+    // Function to load students for a specific group
+    async function loadStudentsByGroup(groupId) {
+        try {
+            console.log('Loading students for group:', groupId);
+            
+            const response = await axios.get(`/users/role/student?group_id=${groupId}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            console.log('Students response:', response.data);
+            
+            const studentSelect = document.getElementById('studentSubjectStudent');
+            // Clear all options except the first one
+            while (studentSelect.options.length > 1) {
+                studentSelect.remove(1);
+            }
+            
+            // Add new options
+            response.data.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = student.full_name || student.username;
+                studentSelect.appendChild(option);
+            });
+            
+            console.log('Updated student select with options:', studentSelect.options.length - 1);
+        } catch (error) {
+            console.error('Error loading students by group:', error);
+            console.error('Error details:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                headers: error.response?.headers
+            });
+            showErrorMessage('Помилка при завантаженні студентів', error);
+        }
+    }
+
+    // Load student-subjects function
+    async function loadStudentSubjects() {
+        try {
+            const response = await axios.get('/api/journal/student-subjects', {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            studentSubjects = response.data;
+            renderStudentSubjects();
+        } catch (error) {
+            console.error('Error loading student subjects:', error);
+            showErrorMessage('Помилка при завантаженні зв\'язків студентів з предметами', error);
+        }
+    }
+
+    // Render student-subjects in a table
+    function renderStudentSubjects() {
+        const table = document.getElementById('studentSubjectsTable');
+        if (!table) return;
+        
+        if (studentSubjects.length === 0) {
+            table.innerHTML = '<tr><td colspan="5" class="text-center">Немає даних для відображення</td></tr>';
+            return;
+        }
+        
+        // Create maps for lookup
+        const studentMap = {};
+        const groupMap = {};
+        const subjectMap = {};
+        
+        // Get all students
+        axios.get('/users/role/student', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }).then(response => {
+            response.data.forEach(student => {
+                studentMap[student.id] = student.full_name || student.username;
+                if (student.group) {
+                    groupMap[student.id] = student.group.name;
+                }
+            });
+            
+            // Get all subjects
+            subjects.forEach(subject => {
+                subjectMap[subject.id] = subject.name;
+            });
+            
+            let html = '';
+            studentSubjects.forEach(ss => {
+                html += `<tr>
+                    <td>${ss.id}</td>
+                    <td>${studentMap[ss.student_id] || 'Невідомо'}</td>
+                    <td>${groupMap[ss.student_id] || 'Невідомо'}</td>
+                    <td>${subjectMap[ss.subject_id] || 'Невідомо'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger delete-student-subject" data-id="${ss.id}">Видалити</button>
+                    </td>
+                </tr>`;
+            });
+            
+            table.innerHTML = html;
+            
+            // Add event listeners for delete buttons
+            table.querySelectorAll('.delete-student-subject').forEach(button => {
+                button.addEventListener('click', function() {
+                    deleteStudentSubject(this.getAttribute('data-id'));
+                });
+            });
+        }).catch(error => {
+            console.error('Error fetching students:', error);
+            showErrorMessage('Помилка при завантаженні студентів', error);
+        });
+    }
+    
+    // Delete student-subject function
+    async function deleteStudentSubject(studentSubjectId) {
+        if (confirm('Ви впевнені, що хочете видалити цей зв\'язок студента з предметом?')) {
+            try {
+                await axios.delete(`/api/journal/student-subjects/${studentSubjectId}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                showSuccessMessage('Зв\'язок видалено успішно');
+                loadStudentSubjects();
+            } catch (error) {
+                console.error('Error deleting student-subject:', error);
+                showErrorMessage('Помилка при видаленні зв\'язку', error);
+            }
+        }
+    }
+    
+    // Group dropdown change event for student-subject
+    document.getElementById('studentSubjectGroup').addEventListener('change', function() {
+        const groupId = this.value;
+        if (groupId) {
+            loadStudentsByGroup(groupId);
+        } else {
+            const studentSelect = document.getElementById('studentSubjectStudent');
+            while (studentSelect.options.length > 1) {
+                studentSelect.remove(1);
+            }
+        }
+    });
+    
+    // Populate group dropdowns in student-subject modal
+    function populateStudentSubjectDropdowns() {
+        const groupDropdown = document.getElementById('studentSubjectGroup');
+        const subjectDropdown = document.getElementById('studentSubjectSubject');
+        
+        if (!groupDropdown || !subjectDropdown) return;
+        
+        // Clear all options except the first one
+        while (groupDropdown.options.length > 1) {
+            groupDropdown.remove(1);
+        }
+        
+        while (subjectDropdown.options.length > 1) {
+            subjectDropdown.remove(1);
+        }
+        
+        // Add new group options
+        groups.forEach(group => {
+            const option = document.createElement('option');
+            option.value = group.id;
+            option.textContent = group.name;
+            groupDropdown.appendChild(option);
+        });
+        
+        // Add new subject options
+        subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.id;
+            option.textContent = subject.name;
+            subjectDropdown.appendChild(option);
+        });
+    }
+    
+    // Save student-subject button event listener
+    document.getElementById('saveStudentSubjectBtn').addEventListener('click', async function() {
+        const studentId = document.getElementById('studentSubjectStudent').value;
+        const subjectId = document.getElementById('studentSubjectSubject').value;
+        
+        if (!studentId || !subjectId) {
+            showErrorMessage('Заповніть усі обов\'язкові поля');
+            return;
+        }
+        
+        try {
+            const response = await axios.post('/api/journal/student-subjects', {
+                student_id: parseInt(studentId),
+                subject_id: parseInt(subjectId)
+            }, {
+                headers: { 
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            showSuccessMessage('Студента додано до предмету успішно');
+            document.getElementById('studentSubjectStudent').selectedIndex = 0;
+            document.getElementById('studentSubjectSubject').selectedIndex = 0;
+            document.getElementById('studentSubjectGroup').selectedIndex = 0;
+            loadStudentSubjects();
+            
+            // Close the modal
+            bootstrap.Modal.getInstance(document.getElementById('addStudentToSubjectModal')).hide();
+            
+            // Check if response has journal info and ask if user wants to navigate to the journal
+            if (response.data && response.data.journal_info) {
+                const journalInfo = response.data.journal_info;
+                if (confirm(`Студента успішно додано до предмету "${journalInfo.subject}" в групі "${journalInfo.group}". Перейти до журналу зараз?`)) {
+                    window.location.href = journalInfo.journal_url;
+                }
+            }
+        } catch (error) {
+            console.error('Error adding student to subject:', error);
+            showErrorMessage('Помилка при додаванні студента до предмету', error);
+        }
+    });
+
+    // Populate dropdowns when modals are opened
+    $('#addStudentToSubjectModal').on('show.bs.modal', function () {
+        populateStudentSubjectDropdowns();
+        
+        // Add event listener for group selection
+        const groupSelect = document.getElementById('studentSubjectGroup');
+        if (groupSelect) {
+            groupSelect.addEventListener('change', function() {
+                const groupId = this.value;
+                if (groupId) {
+                    loadStudentsByGroup(groupId);
+                } else {
+                    const studentSelect = document.getElementById('studentSubjectStudent');
+                    while (studentSelect.options.length > 1) {
+                        studentSelect.remove(1);
+                    }
+                }
+            });
+        }
+    });
+
+    // Function to load all groups for student group change
+    function loadGroupsForStudentChange() {
+        const groupSelect = document.getElementById('studentNewGroup');
+        
+        // Clear all options except the first one
+        while (groupSelect.options.length > 1) {
+            groupSelect.remove(1);
+        }
+        
+        // Add new options
+        groups.forEach(group => {
+            const option = document.createElement('option');
+            option.value = group.id;
+            option.textContent = group.name;
+            groupSelect.appendChild(option);
+        });
+    }
+    
+    // Function to open change group modal
+    function openChangeGroupModal(studentId, username, currentGroup, currentGroupId) {
+        // Set the student ID in the hidden field
+        document.getElementById('studentIdForGroupChange').value = studentId;
+        
+        // Set the current group name
+        document.getElementById('studentCurrentGroup').value = currentGroup || 'Не призначено';
+        
+        // Load groups and preselect current group if available
+        loadGroupsForStudentChange();
+        if (currentGroupId) {
+            document.getElementById('studentNewGroup').value = currentGroupId;
+        }
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('changeStudentGroupModal'));
+        modal.show();
+    }
+    
+    // Save student group button event listener
+    document.getElementById('saveStudentGroupBtn').addEventListener('click', async function() {
+        const studentId = document.getElementById('studentIdForGroupChange').value;
+        const groupId = document.getElementById('studentNewGroup').value;
+        
+        console.log('Starting group update process...');
+        console.log('Student ID:', studentId);
+        console.log('Group ID:', groupId);
+        
+        if (!studentId) {
+            showErrorMessage('Помилка: не вказано студента');
+            return;
+        }
+
+        if (!groupId) {
+            showErrorMessage('Будь ласка, оберіть групу');
+            return;
+        }
+        
+        try {
+            // Prepare the request data
+            const data = {
+                group_id: parseInt(groupId)
+            };
+            
+            console.log('Prepared request data:', data);
+            console.log('Sending request to:', `/users/${studentId}`);
+            
+            // Make the API request
+            const response = await axios.put(`/users/${studentId}`, data, {
+                headers: { 
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            console.log('Server response:', response.data);
+            showSuccessMessage('Групу студента змінено успішно');
+            
+            // Close the modal
+            bootstrap.Modal.getInstance(document.getElementById('changeStudentGroupModal')).hide();
+            
+            // Reload users to update the list
+            loadUsers();
+        } catch (error) {
+            console.error('Error changing student group:', error);
+            console.error('Error details:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                headers: error.response?.headers
+            });
+            
+            let message = 'Помилка при зміні групи студента';
+            
+            // Add error details if available
+            if (error.response && error.response.data && error.response.data.detail) {
+                message += ': ' + error.response.data.detail;
+            }
+            
+            showErrorMessage(message, error);
+        }
+    });
+    
+    // Save subject-group button event listener
+    document.getElementById('saveSubjectGroupBtn').addEventListener('click', async function() {
+        const subjectId = document.getElementById('subjectGroupSubject').value;
+        const groupId = document.getElementById('subjectGroupGroup').value;
+        
+        if (!subjectId || !groupId) {
+            showErrorMessage('Заповніть усі обов\'язкові поля');
+            return;
+        }
+        
+        try {
+            await axios.post('/api/journal/subject-groups', {
+                subject_id: parseInt(subjectId),
+                group_id: parseInt(groupId)
+            }, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            
+            showSuccessMessage('Зв\'язок предмет-група додано успішно');
+            document.getElementById('subjectGroupSubject').selectedIndex = 0;
+            document.getElementById('subjectGroupGroup').selectedIndex = 0;
+            loadSubjectGroups();
+            
+            // Close the modal
+            bootstrap.Modal.getInstance(document.getElementById('addSubjectGroupModal')).hide();
+        } catch (error) {
+            console.error('Error adding subject-group:', error);
+            showErrorMessage('Помилка при додаванні зв\'язку предмет-група', error);
+        }
+    });
+});
+</script>
+{% endblock %} 

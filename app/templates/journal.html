@@ -1,0 +1,591 @@
+{% extends "base.html" %}
+
+{% block title %}Журнал - {{ journal.subject }} - {{ journal.group }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .journal-table {
+        overflow-x: auto;
+    }
+    
+    .journal-table table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    
+    .journal-table th, .journal-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+    }
+    
+    .journal-table th {
+        background-color: #f2f2f2;
+        position: sticky;
+        top: 0;
+    }
+    
+    .journal-table .student-name {
+        text-align: left;
+        font-weight: bold;
+        position: sticky;
+        left: 0;
+        background-color: #f9f9f9;
+    }
+    
+    .journal-table .grade-cell {
+        cursor: pointer;
+    }
+    
+    .journal-table .attendance-present {
+        background-color: #d4edda;
+    }
+    
+    .journal-table .attendance-absent {
+        background-color: #f8d7da;
+    }
+    
+    .journal-table .grade-high {
+        color: #28a745;
+    }
+    
+    .journal-table .grade-medium {
+        color: #ffc107;
+    }
+    
+    .journal-table .grade-low {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Журнал: {{ journal.subject }}</h2>
+        <p>Факультет: {{ journal.faculty }} | Група: {{ journal.group }}</p>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="btn-toolbar" role="toolbar">
+            <div class="btn-group me-2" role="group">
+                <button type="button" class="btn btn-outline-primary" id="showAllBtn">Все</button>
+                <button type="button" class="btn btn-outline-primary" id="showGradesBtn">Тільки оцінки</button>
+                <button type="button" class="btn btn-outline-primary" id="showAttendanceBtn">Тільки відвідуваність</button>
+            </div>
+            
+            {% if user and (user.role.value == 'teacher' or user.role.value == 'admin') %}
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-success" id="addGradeBtn" data-subject-group-id="{{ journal.subject_group_id }}">Додати оцінку</button>
+                <button type="button" class="btn btn-warning" id="markAttendanceBtn" data-subject-group-id="{{ journal.subject_group_id }}">Відмітити відвідуваність</button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="journal-table">
+                    <table id="journalTable" class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" class="student-name">Студент</th>
+                                {% for date in journal.dates %}
+                                <th colspan="2">{{ date|date }}</th>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                {% for date in journal.dates %}
+                                <th class="grade-header">О</th>
+                                <th class="attendance-header">В</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if journal.students and journal.students|length > 0 %}
+                                {% for student in journal.students %}
+                                <tr data-student-id="{{ student.id }}">
+                                    <td class="student-name">{{ student.name }}</td>
+                                    {% for date in journal.dates %}
+                                    {% set date_str = date|string %}
+                                    {% set grade = journal.grades[student.id|string][date_str] if student.id|string in journal.grades and date_str in journal.grades[student.id|string] else none %}
+                                    {% set attendance = journal.attendance[student.id|string][date_str] if student.id|string in journal.attendance and date_str in journal.attendance[student.id|string] else none %}
+                                    
+                                    <td class="grade-cell" data-student-id="{{ student.id }}" data-date="{{ date_str }}">
+                                        {% if grade is not none %}
+                                            {% if grade >= 90 %}
+                                                <span class="grade-high">{{ grade }}</span>
+                                            {% elif grade >= 60 %}
+                                                <span class="grade-medium">{{ grade }}</span>
+                                            {% else %}
+                                                <span class="grade-low">{{ grade }}</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    <td class="attendance-cell" data-student-id="{{ student.id }}" data-date="{{ date_str }}">
+                                        {% if attendance is not none %}
+                                            {% if attendance %}
+                                                <span class="attendance-present">✓</span>
+                                            {% else %}
+                                                <span class="attendance-absent">✗</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="{{ (journal.dates|length * 2) + 1 }}" class="text-center">
+                                        <div class="alert alert-info m-0">
+                                            У цій групі немає студентів. Додайте студентів до групи, щоб вести журнал.
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user and (user.role.value == 'teacher' or user.role.value == 'admin') %}
+<!-- Add Grade Modal -->
+<div class="modal fade" id="gradeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати оцінку</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="gradeForm">
+                    <div class="mb-3">
+                        <label for="gradeStudent" class="form-label">Студент</label>
+                        <select class="form-select" id="gradeStudent" required>
+                            {% for student in journal.students %}
+                            <option value="{{ student.id }}">{{ student.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="gradeDate" class="form-label">Дата</label>
+                        <input type="date" class="form-control" id="gradeDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="gradeValue" class="form-label">Оцінка</label>
+                        <input type="number" class="form-control" id="gradeValue" min="0" max="100" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="gradeDescription" class="form-label">Опис</label>
+                        <textarea class="form-control" id="gradeDescription" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="saveGradeBtn">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Attendance Modal -->
+<div class="modal fade" id="attendanceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Відмітити відвідуваність</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="attendanceForm">
+                    <div class="mb-3">
+                        <label for="attendanceDate" class="form-label">Дата</label>
+                        <input type="date" class="form-control" id="attendanceDate" required>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Студент</th>
+                                    <th>Присутній</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in journal.students %}
+                                <tr>
+                                    <td>{{ student.name }}</td>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" checked
+                                                id="attendance-{{ student.id }}" 
+                                                data-student-id="{{ student.id }}">
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" id="saveAttendanceBtn">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get elements
+        const journalTable = document.getElementById('journalTable');
+        const showAllBtn = document.getElementById('showAllBtn');
+        const showGradesBtn = document.getElementById('showGradesBtn');
+        const showAttendanceBtn = document.getElementById('showAttendanceBtn');
+        
+        // Teacher/Admin specific elements - check if they exist first
+        const addGradeBtn = document.getElementById('addGradeBtn');
+        const markAttendanceBtn = document.getElementById('markAttendanceBtn');
+        const gradeModalEl = document.getElementById('gradeModal');
+        const attendanceModalEl = document.getElementById('attendanceModal');
+        const saveGradeBtn = document.getElementById('saveGradeBtn');
+        const saveAttendanceBtn = document.getElementById('saveAttendanceBtn');
+        
+        // Initialize teacher/admin functionality if elements exist
+        if (addGradeBtn && markAttendanceBtn && gradeModalEl && attendanceModalEl) {
+            const gradeModal = new bootstrap.Modal(gradeModalEl);
+            const attendanceModal = new bootstrap.Modal(attendanceModalEl);
+            
+            // Get the subject group ID from the button data attribute
+            const subjectGroupId = addGradeBtn.dataset.subjectGroupId;
+            
+            // Set today's date for the date inputs
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('gradeDate').value = today;
+            document.getElementById('attendanceDate').value = today;
+            
+            // Click handlers for adding grades/attendance
+            addGradeBtn.addEventListener('click', function() {
+                // Reset the form
+                document.getElementById('gradeForm').reset();
+                document.getElementById('gradeDate').value = today;
+                
+                // Remove any existing delete button
+                const existingDeleteBtn = document.getElementById('deleteGradeBtn');
+                if (existingDeleteBtn) {
+                    existingDeleteBtn.remove();
+                }
+                
+                gradeModal.show();
+            });
+            
+            markAttendanceBtn.addEventListener('click', function() {
+                // Reset the form
+                document.getElementById('attendanceForm').reset();
+                document.getElementById('attendanceDate').value = today;
+                
+                // Check all attendance checkboxes by default
+                const attendanceCheckboxes = document.querySelectorAll('[id^="attendance-"]');
+                attendanceCheckboxes.forEach(checkbox => checkbox.checked = true);
+                
+                attendanceModal.show();
+            });
+            
+            // Save grade
+            saveGradeBtn.addEventListener('click', async function() {
+                const studentId = document.getElementById('gradeStudent').value;
+                const date = document.getElementById('gradeDate').value;
+                const grade = document.getElementById('gradeValue').value;
+                const description = document.getElementById('gradeDescription').value;
+                
+                if (!studentId || !date || !grade) {
+                    alert('Будь ласка, заповніть усі обов\'язкові поля.');
+                    return;
+                }
+                
+                try {
+                    // Check if we're updating an existing grade
+                    const existingGradeId = document.getElementById('gradeForm').dataset.gradeId;
+                    
+                    if (existingGradeId) {
+                        // Update existing grade
+                        const response = await axios.put(`/api/journal/grades/${existingGradeId}`, {
+                            grade: parseInt(grade),
+                            date: date,
+                            description: description
+                        }, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        
+                        if (response.status === 200) {
+                            window.location.reload();
+                        }
+                    } else {
+                        // Create new grade
+                        const response = await axios.post('/api/journal/grades', {
+                            student_id: parseInt(studentId),
+                            subject_group_id: parseInt(subjectGroupId),
+                            grade: parseInt(grade),
+                            date: date,
+                            description: description
+                        }, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        
+                        if (response.status === 201) {
+                            window.location.reload();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error saving grade:', error);
+                    alert('Помилка при збереженні оцінки: ' + (error.response?.data?.detail || error.message));
+                }
+            });
+            
+            // Save attendance
+            saveAttendanceBtn.addEventListener('click', async function() {
+                const date = document.getElementById('attendanceDate').value;
+                
+                if (!date) {
+                    alert('Будь ласка, оберіть дату.');
+                    return;
+                }
+                
+                try {
+                    // Get all student attendance records
+                    const attendanceCheckboxes = document.querySelectorAll('[id^="attendance-"]');
+                    const attendancePromises = [];
+                    
+                    attendanceCheckboxes.forEach(checkbox => {
+                        const studentId = checkbox.dataset.studentId;
+                        const isPresent = checkbox.checked;
+                        const existingAttendanceId = checkbox.dataset.attendanceId;
+                        
+                        if (existingAttendanceId) {
+                            // Update existing attendance
+                            const promise = axios.put(`/api/journal/attendance/${existingAttendanceId}`, {
+                                is_present: isPresent
+                            }, {
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                            });
+                            attendancePromises.push(promise);
+                        } else {
+                            // Create new attendance
+                            const promise = axios.post('/api/journal/attendance', {
+                                student_id: parseInt(studentId),
+                                subject_group_id: parseInt(subjectGroupId),
+                                date: date,
+                                is_present: isPresent
+                            }, {
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                            });
+                            attendancePromises.push(promise);
+                        }
+                    });
+                    
+                    await Promise.all(attendancePromises);
+                    window.location.reload();
+                } catch (error) {
+                    console.error('Error saving attendance:', error);
+                    alert('Помилка при збереженні відвідуваності: ' + (error.response?.data?.detail || error.message));
+                }
+            });
+            
+            // Update grade when clicking on a grade cell
+            journalTable.addEventListener('click', function(e) {
+                if (e.target.classList.contains('grade-cell') || e.target.parentElement.classList.contains('grade-cell')) {
+                    const cell = e.target.classList.contains('grade-cell') ? e.target : e.target.parentElement;
+                    const studentId = cell.dataset.studentId;
+                    const date = cell.dataset.date;
+                    const currentGrade = cell.textContent.trim();
+                    
+                    // Set the student and date in the grade modal
+                    document.getElementById('gradeStudent').value = studentId;
+                    document.getElementById('gradeDate').value = date.split('T')[0];
+                    
+                    // If there's a current grade, set it in the input
+                    if (currentGrade) {
+                        document.getElementById('gradeValue').value = currentGrade;
+                        
+                        // Get the grade ID and set it in the form
+                        axios.get(`/api/journal/grades?student_id=${studentId}&subject_group_id=${subjectGroupId}`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        })
+                            .then(response => {
+                                if (response.data && response.data.length > 0) {
+                                    // Find the grade with matching date
+                                    const matchingDate = date.split('T')[0];
+                                    const gradeToEdit = response.data.find(g => {
+                                        const gradeDate = new Date(g.date).toISOString().split('T')[0];
+                                        return gradeDate === matchingDate;
+                                    });
+                                    
+                                    if (gradeToEdit) {
+                                        // Set the grade ID in the form
+                                        document.getElementById('gradeForm').dataset.gradeId = gradeToEdit.id;
+                                        
+                                        // Add a delete button
+                                        const modalFooter = document.querySelector('#gradeModal .modal-footer');
+                                        const existingDeleteBtn = document.getElementById('deleteGradeBtn');
+                                        
+                                        if (existingDeleteBtn) {
+                                            existingDeleteBtn.remove();
+                                        }
+                                        
+                                        const deleteBtn = document.createElement('button');
+                                        deleteBtn.type = 'button';
+                                        deleteBtn.className = 'btn btn-danger me-auto';
+                                        deleteBtn.id = 'deleteGradeBtn';
+                                        deleteBtn.textContent = 'Видалити';
+                                        
+                                        deleteBtn.addEventListener('click', async function() {
+                                            if (confirm('Ви впевнені, що хочете видалити цю оцінку?')) {
+                                                try {
+                                                    await axios.delete(`/api/journal/grades/${gradeToEdit.id}`, {
+                                                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                                                    });
+                                                    window.location.reload();
+                                                } catch (error) {
+                                                    console.error('Error deleting grade:', error);
+                                                    alert('Помилка при видаленні оцінки: ' + (error.response?.data?.detail || error.message));
+                                                }
+                                            }
+                                        });
+                                        
+                                        modalFooter.insertBefore(deleteBtn, modalFooter.firstChild);
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error getting grade:', error);
+                                alert('Помилка при отриманні даних оцінки: ' + (error.response?.data?.detail || error.message));
+                            });
+                    } else {
+                        // Clear the grade ID from the form
+                        document.getElementById('gradeForm').dataset.gradeId = '';
+                        
+                        // Remove any existing delete button
+                        const existingDeleteBtn = document.getElementById('deleteGradeBtn');
+                        if (existingDeleteBtn) {
+                            existingDeleteBtn.remove();
+                        }
+                    }
+                    
+                    // Show the modal
+                    gradeModal.show();
+                }
+                
+                // Handle clicks on attendance cells
+                if (e.target.classList.contains('attendance-cell') || e.target.parentElement.classList.contains('attendance-cell')) {
+                    const cell = e.target.classList.contains('attendance-cell') ? e.target : e.target.parentElement;
+                    const studentId = cell.dataset.studentId;
+                    const date = cell.dataset.date;
+                    
+                    // Check current attendance status
+                    const isPresent = cell.querySelector('.attendance-present') !== null;
+                    const isAbsent = cell.querySelector('.attendance-absent') !== null;
+                    
+                    // Get the attendance ID if it exists
+                    axios.get(`/api/journal/attendance?student_id=${studentId}&subject_group_id=${subjectGroupId}`, {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    })
+                        .then(response => {
+                            if (response.data && response.data.length > 0) {
+                                // Find the attendance record with matching date
+                                const matchingDate = date.split('T')[0];
+                                const attendanceRecord = response.data.find(a => {
+                                    const attendanceDate = new Date(a.date).toISOString().split('T')[0];
+                                    return attendanceDate === matchingDate;
+                                });
+                                
+                                if (attendanceRecord) {
+                                    // Set the attendance ID in the checkbox
+                                    const checkbox = document.getElementById(`attendance-${studentId}`);
+                                    if (checkbox) {
+                                        checkbox.dataset.attendanceId = attendanceRecord.id;
+                                        checkbox.checked = attendanceRecord.is_present;
+                                    }
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error getting attendance:', error);
+                            alert('Помилка при отриманні даних відвідуваності: ' + (error.response?.data?.detail || error.message));
+                        });
+                    
+                    // Show the attendance modal
+                    attendanceModal.show();
+                }
+            });
+        }
+        
+        // Filter view (All, Grades only, Attendance only)
+        showAllBtn.addEventListener('click', function() {
+            const gradeHeaders = document.querySelectorAll('.grade-header');
+            const attendanceHeaders = document.querySelectorAll('.attendance-header');
+            const gradeCells = document.querySelectorAll('.grade-cell');
+            const attendanceCells = document.querySelectorAll('.attendance-cell');
+            
+            gradeHeaders.forEach(header => header.style.display = '');
+            attendanceHeaders.forEach(header => header.style.display = '');
+            gradeCells.forEach(cell => cell.style.display = '');
+            attendanceCells.forEach(cell => cell.style.display = '');
+            
+            // Update active button
+            showAllBtn.classList.add('active');
+            showGradesBtn.classList.remove('active');
+            showAttendanceBtn.classList.remove('active');
+        });
+        
+        showGradesBtn.addEventListener('click', function() {
+            const gradeHeaders = document.querySelectorAll('.grade-header');
+            const attendanceHeaders = document.querySelectorAll('.attendance-header');
+            const gradeCells = document.querySelectorAll('.grade-cell');
+            const attendanceCells = document.querySelectorAll('.attendance-cell');
+            
+            gradeHeaders.forEach(header => header.style.display = '');
+            attendanceHeaders.forEach(header => header.style.display = 'none');
+            gradeCells.forEach(cell => cell.style.display = '');
+            attendanceCells.forEach(cell => cell.style.display = 'none');
+            
+            // Update active button
+            showAllBtn.classList.remove('active');
+            showGradesBtn.classList.add('active');
+            showAttendanceBtn.classList.remove('active');
+        });
+        
+        showAttendanceBtn.addEventListener('click', function() {
+            const gradeHeaders = document.querySelectorAll('.grade-header');
+            const attendanceHeaders = document.querySelectorAll('.attendance-header');
+            const gradeCells = document.querySelectorAll('.grade-cell');
+            const attendanceCells = document.querySelectorAll('.attendance-cell');
+            
+            gradeHeaders.forEach(header => header.style.display = 'none');
+            attendanceHeaders.forEach(header => header.style.display = '');
+            gradeCells.forEach(cell => cell.style.display = 'none');
+            attendanceCells.forEach(cell => cell.style.display = '');
+            
+            // Update active button
+            showAllBtn.classList.remove('active');
+            showGradesBtn.classList.remove('active');
+            showAttendanceBtn.classList.add('active');
+        });
+        
+        // Set 'All' as default active button
+        showAllBtn.classList.add('active');
+    });
+</script>
+{% endblock %} 

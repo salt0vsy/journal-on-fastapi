@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Вхід - Електронний журнал{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card mt-5">
+                <div class="card-header">
+                    <h2 class="text-center">Вхід в систему</h2>
+                </div>
+                <div class="card-body">
+                    <div id="login-error" class="alert alert-danger d-none" role="alert">
+                        Невірний логін або пароль
+                    </div>
+
+                    <form id="login-form">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Ім'я користувача</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Пароль</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Увійти</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <p>Ще не зареєстровані? <a href="/register">Створити обліковий запис</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
+    
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        try {
+            const response = await axios.post('/login', {
+                username: username,
+                password: password
+            });
+            
+            if (response.data && response.data.access_token) {
+                // Збереження токену в localStorage
+                localStorage.setItem('token', response.data.access_token);
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+                
+                // Додавання токена до cookies вручну, якщо з якоїсь причини він не встановлюється сервером
+                document.cookie = `access_token=Bearer ${response.data.access_token}; path=/; max-age=1800`;
+                
+                // Перенаправлення на головну сторінку після успішного входу
+                window.location.href = '/';
+            } else {
+                // Показати повідомлення про помилку
+                loginError.textContent = 'Невірні дані авторизації';
+                loginError.classList.remove('d-none');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            loginError.textContent = error.response?.data?.detail || 'Помилка підключення до сервера';
+            loginError.classList.remove('d-none');
+        }
+    });
+});
+</script>
+{% endblock %} 
